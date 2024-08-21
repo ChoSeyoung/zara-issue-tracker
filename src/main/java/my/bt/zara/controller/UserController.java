@@ -1,8 +1,10 @@
 package my.bt.zara.controller;
 
+import my.bt.zara.common.ApiResponse;
 import my.bt.zara.dto.UserRegistrationRequest;
 import my.bt.zara.model.Users;
 import my.bt.zara.service.UserService;
+import my.bt.zara.util.ApiResponseUtil;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -18,12 +20,12 @@ public class UserController {
   }
 
   @PostMapping("/register")
-  public ResponseEntity<String> registerUser(@RequestBody UserRegistrationRequest request) {
-    try {
-      Users users = userService.registerUser(request.getUsername(), request.getPassword());
-      return ResponseEntity.ok("User registered successfully: " + users.getUsername());
-    } catch (Exception e) {
-      return ResponseEntity.badRequest().body(e.getMessage());
-    }
+  public ResponseEntity<ApiResponse<Users>> registerUser(
+        @RequestBody UserRegistrationRequest params) {
+
+    Users user = userService.registerUser(params);
+
+    return ResponseEntity.ok(
+          ApiResponseUtil.createSuccessResponse(user, "ok"));
   }
 }

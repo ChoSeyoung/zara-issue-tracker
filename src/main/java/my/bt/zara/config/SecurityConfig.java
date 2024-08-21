@@ -3,7 +3,8 @@ package my.bt.zara.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.HashMap;
 import java.util.Map;
-import my.bt.zara.service.CustomUserDetailsService;
+import my.bt.zara.common.ApiResponse;
+import my.bt.zara.util.ApiResponseUtil;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -12,17 +13,12 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.LogoutConfigurer;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -32,14 +28,6 @@ import java.util.List;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
-
-  private final CustomUserDetailsService customUserDetailsService;
-
-  public SecurityConfig(CustomUserDetailsService customUserDetailsService) {
-    this.customUserDetailsService = customUserDetailsService;
-  }
-
-
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
     http
@@ -48,12 +36,11 @@ public class SecurityConfig {
                 .anyRequest().authenticated()
           )
           .formLogin(form -> form
-                .loginPage("/")
                 .loginProcessingUrl("/login")
-                .defaultSuccessUrl("/", false) // 리다이렉트를 하지 않도록 false 설정
-                .failureUrl("/") // 리다이렉트를 하지 않도록 false 설정
-                .successHandler(customAuthenticationSuccessHandler()) // 성공 시 핸들러
-                .failureHandler(customAuthenticationFailureHandler()) // 실패 시 핸들러
+                .usernameParameter("username")
+                .passwordParameter("password")
+                .successHandler(customAuthenticationSuccessHandler())
+                .failureHandler(customAuthenticationFailureHandler())
                 .permitAll()
           )
           .logout(LogoutConfigurer::permitAll)
@@ -89,14 +76,13 @@ public class SecurityConfig {
       response.setStatus(HttpStatus.OK.value());
       response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 
-      // JSON 데이터를 생성
-      Map<String, Object> data = new HashMap<>();
-      data.put("code", HttpStatus.OK.value());
-      data.put("data", authentication.getName());
+      // 공통 응답 객체 생성
+      ApiResponse<String> apiResponse = ApiResponseUtil.createSuccessResponse(
+            authentication.getName(), "Login successful");
 
       // JSON 데이터를 응답 본문에 작성
       ObjectMapper objectMapper = new ObjectMapper();
-      response.getWriter().write(objectMapper.writeValueAsString(data));
+      response.getWriter().write(objectMapper.writeValueAsString(apiResponse));
       response.getWriter().flush();
     };
   }
@@ -104,22 +90,16 @@ public class SecurityConfig {
   @Bean
   public AuthenticationFailureHandler customAuthenticationFailureHandler() {
     return (request, response, exception) -> {
-      response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
+      response.setStatus(HttpStatus.UNAUTHORIZED.value());
       response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 
-      // JSON 데이터를 생성
-      Map<String, Object> data = new HashMap<>();
-      data.put("code", HttpStatus.INTERNAL_SERVER_ERROR.value());
-
-      Map<String, Object> message = new HashMap<>();
-      message.put("title", "로그인 실패");
-      message.put("description", "계정 정보를 확인해주세요.");
-
-      data.put("data", message);
+      // 공통 에러 응답 객체 생성
+      ApiResponse<Object> apiResponse = ApiResponseUtil.createErrorResponse(
+            HttpStatus.UNAUTHORIZED, "Login failed", "AuthenticationException", exception.getMessage());
 
       // JSON 데이터를 응답 본문에 작성
       ObjectMapper objectMapper = new ObjectMapper();
-      response.getWriter().write(objectMapper.writeValueAsString(data));
+      response.getWriter().write(objectMapper.writeValueAsString(apiResponse));
       response.getWriter().flush();
     };
   }

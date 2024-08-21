@@ -1,31 +1,39 @@
 package my.bt.zara.service;
 
+import jakarta.transaction.Transactional;
+import my.bt.zara.dto.UserRegistrationRequest;
 import my.bt.zara.model.Users;
+import my.bt.zara.model.Role;
+import my.bt.zara.repository.RoleRepository;
 import my.bt.zara.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
 public class UserService {
+  private final RoleRepository roleRepository;
   private final UserRepository userRepository;
   private final PasswordEncoder passwordEncoder;
 
-  public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+  public UserService(RoleRepository roleRepository, UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    this.roleRepository = roleRepository;
     this.userRepository = userRepository;
     this.passwordEncoder = passwordEncoder;
   }
 
-  public Users registerUser(String username, String password) {
-    // 이미 존재하는 사용자인지 확인
-    if (userRepository.findByUsername(username).isPresent()) {
+  @Transactional
+  public Users registerUser(UserRegistrationRequest params) {
+    if (userRepository.findByUsername(params.getUsername()).isPresent()) {
       throw new RuntimeException("Username already exists");
     }
 
-    // 비밀번호 암호화
-    String encodedPassword = passwordEncoder.encode(password);
+    Role userRole = roleRepository.findByName("ROLE_USER")
+          .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
 
-    // User 객체 생성 (Lombok 빌더 패턴 사용)
-    Users users = Users.registerUser(username, encodedPassword);
+
+    String encodedPassword = passwordEncoder.encode(params.getPassword());
+
+    Users users = Users.registerUser(params.getUsername(), encodedPassword, userRole);
 
     return userRepository.save(users);
   }
