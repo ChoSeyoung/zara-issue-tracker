@@ -84,7 +84,7 @@ function Login() {
             Don't have an account yet?{' '}
             <Link
                 className="font-medium text-rose-600 hover:text-rose-500"
-                to="/home"
+                to="/register"
             >
               Sign Up
             </Link>

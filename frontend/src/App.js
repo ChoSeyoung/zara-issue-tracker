@@ -4,6 +4,7 @@ import Login from "./pages/Login/Login";
 import {AuthProvider} from "./contexts/AuthContext";
 import Home from "./pages/Home/Home";
 import PrivateRoute from "./components/PrivateRoute";
+import Register from "./pages/Register/Register";
 
 function App() {
     return (
@@ -11,6 +12,7 @@ function App() {
             <Router>
                 <Routes>
                     <Route path="/" element={<Login/>}/>
+                    <Route path="/register" element={<Register/>}/>
                     <Route path="/home" element={<PrivateRoute element={Home} />} />
                 </Routes>
             </Router>

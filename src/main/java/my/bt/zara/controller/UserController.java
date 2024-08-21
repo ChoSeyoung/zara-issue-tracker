@@ -1,7 +1,7 @@
 package my.bt.zara.controller;
 
 import my.bt.zara.dto.UserRegistrationRequest;
-import my.bt.zara.model.User;
+import my.bt.zara.model.Users;
 import my.bt.zara.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,8 +20,8 @@ public class UserController {
   @PostMapping("/register")
   public ResponseEntity<String> registerUser(@RequestBody UserRegistrationRequest request) {
     try {
-      User user = userService.registerUser(request.getUsername(), request.getPassword());
-      return ResponseEntity.ok("User registered successfully: " + user.getUsername());
+      Users users = userService.registerUser(request.getUsername(), request.getPassword());
+      return ResponseEntity.ok("User registered successfully: " + users.getUsername());
     } catch (Exception e) {
       return ResponseEntity.badRequest().body(e.getMessage());
     }
