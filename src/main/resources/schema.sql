@@ -11,3 +11,11 @@ CREATE TABLE IF NOT EXISTS users (
 
 insert into users(username, password, role)
 values ('root', 'root', 'admin');
+
+CREATE TABLE issues (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    project VARCHAR(255) NOT NULL,
+    issueType VARCHAR(255) NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL
+);
